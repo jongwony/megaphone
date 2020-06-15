@@ -1,3 +1,5 @@
+import json
+
 import jmespath
 
 from .slack import Slack
@@ -16,20 +18,18 @@ class TypeDiverge:
 class MessageTypeDiverge:
     @classmethod
     def message(cls, chalice_req):
-        return dispatcher(MessageSubtypeDiverge, chalice_req, 'event.subtype')
-
-
-class MessageSubtypeDiverge:
-    @classmethod
-    def bot_message(cls, chalice_req):
-        # import boto3
-        # lambda_client = boto3.client('lambda')
-        # lambda_client.invoke(
-        #     FunctionName='event_bot_message',
-        #     InvocationType='Event',
-        #     Payload=json.dumps(event).encode()
-        # )
-        pass
+        body = chalice_req.json_body
+        blocks_payload = [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": jmespath.search('event.text', body),
+                }
+            }
+        ]
+        bot = Slack(channel='#random', username='Megaphone')
+        bot.post_message(blocks=json.dumps(blocks_payload), icon_emoji=':mega:')
 
 
 def dispatcher(cls, chalice_req, query):
